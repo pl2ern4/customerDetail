@@ -113,12 +113,8 @@ class Customer_Model extends Model{
 
 	public function InsertCustomerDetail()
 	{
-		if(!$this->isTableExist()){ 
+		if(!$this->isTableExist()){  
 			$this->createcustomerTable();
-		}
-		$exist =$this->isTableExist();
-		
-		if($exist){  
 			if($this->insertDataInTable())
 			{
 				$res = array('result'=>'data inserted','code'=>1);
