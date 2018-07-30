@@ -1,17 +1,20 @@
 <?php
 
 // Base Controller
-include 'Model.class.php';
 class Controller{
 
-    // Base Controller has a property called $loader, it is an instance of Loader class(introduced later)
-
     protected $model;
-
-
-    public function __construct(){
-    	$model = new Model(); 
-    	$this->model = $model;
-
-	}
+    public function __construct($params){
+        $model = ucfirst($params)."_Model";
+        $model_folder = FOLDER."/model/".$model.".class.php";
+        if(!file_exists($model_folder))
+		{
+			$file = 'defined model';
+			include FOLDER.'/view/error.html';
+			exit;
+		}
+        include $model_folder;
+        
+    	$this->model = new $model; 
+    }
 }

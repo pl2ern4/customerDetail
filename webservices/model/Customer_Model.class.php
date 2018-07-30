@@ -20,7 +20,7 @@ class Customer_Model extends Model{
 		website VARCHAR(500)
 		)";
 
-		$dbresp = $this->connect->exec($sql);
+		$dbresp = $this->db->exec($sql);
 		if(!$dbresp){
 			return false;
 		}else{
@@ -29,7 +29,7 @@ class Customer_Model extends Model{
 	}
 	function isTableExist(){
 		$isDbExist = "select 1 from customer;";
-		$dbresp = $this->connect->exec($isDbExist);
+		$dbresp = $this->db->exec($isDbExist);
 		if(!$dbresp){
 			return false;
 		}
@@ -44,23 +44,23 @@ class Customer_Model extends Model{
 							for ($c=0; $c < $fieldCount; $c++) {
 							  $columnData[$c] = $data[$c];
 							}
-					 $id = $this->connect->escapeString($columnData[0]);
-					 $first_name = $this->connect->escapeString($columnData[1]);
-					 $last_name = $this->connect->escapeString($columnData[2]);
-					 $email = $this->connect->escapeString($columnData[3]);
-					 $gender = $this->connect->escapeString($columnData[4]);
-					 $ip_address = $this->connect->escapeString($columnData[5]);
-					 $company = $this->connect->escapeString($columnData[6]);
-					 $city = $this->connect->escapeString($columnData[7]);
-					 $title = $this->connect->escapeString($columnData[8]);
-					 $website = $this->connect->escapeString($columnData[9]);
+					 $id = $this->db->escapeString($columnData[0]);
+					 $first_name = $this->db->escapeString($columnData[1]);
+					 $last_name = $this->db->escapeString($columnData[2]);
+					 $email = $this->db->escapeString($columnData[3]);
+					 $gender = $this->db->escapeString($columnData[4]);
+					 $ip_address = $this->db->escapeString($columnData[5]);
+					 $company = $this->db->escapeString($columnData[6]);
+					 $city = $this->db->escapeString($columnData[7]);
+					 $title = $this->db->escapeString($columnData[8]);
+					 $website = $this->db->escapeString($columnData[9]);
 					 $import_data[] ='("'.$id.'","'.$first_name.'","'.$last_name.'","'.$email.'","'.$gender.'","'.$ip_address.'","'.$company.'","'.$city.'","'.$title.'","'.$website.'")'; 
 					// SQL Query to insert data into DataBase
 					 
 			}
 			$import_data = implode(',', $import_data);
 			$query ="INSERT INTO customer (id,first_name,last_name,email,gender,ip_address,company,city,title,website) VALUES ".$import_data.";";
-			if ($this->connect->exec($query)) {
+			if ($this->db->exec($query)) {
 			    // echo "data inserted successfully";
 			    return true;
 			} else {
@@ -70,39 +70,48 @@ class Customer_Model extends Model{
 	}
 	return false;
 	}
-
-	public function getCustomer($params){
-		
-		$rows = [];
-		$data_retrive = "";;
-		if($this->isTableExist()){ 
-			$data_retrive = $this->getCustomerDetail();
-			
-			if(!$data_retrive){
-				header("Access-Control-Allow-Origin: *");
-				header('Content-Type: application/json');
-				json_encode([]);
-				die();
-			}
-			$sql = "select * from customer limit 30";
-			$result = $this->connect->exec($sql);
-			while ($row = $result->fetch_assoc()) {
-			  $data[] = $row;
-			}
-			// echo "<pre>";
-			// print_r($l);
-			header("Access-Control-Allow-Origin: *");
-			header('Content-Type: application/json');
-			echo json_encode($data);
-			die;
+	function getRowCount(){
+		$query = "select COUNT(1) as count from customer";
+		$result = $this->db->exec($query);
+		if(!$result){
+			return null;
 		}
-		header("Access-Control-Allow-Origin: *");
-		header('Content-Type: application/json');
-				echo json_encode([]);
-				die();
+		return mysqli_fetch_array($result)[0];
 	}
 
-	public function getCustomerDetail()
+	public function getCustomer($params){
+
+		$page = ($params['page']!==null && $params['page']!=="") ? trim($params['page']): 1;
+		$limit = $params['limit'] ? trim($params['limit']):10;
+
+		
+		$limit = $limit && $limit<50 ? $limit : 20;
+		$array = ["data"=>[],"pages"=>0,"code"=>0];
+		$rows = [];
+		$data_retrive = "";
+		
+		$totalRows = $this->getRowCount();
+		if(!$totalRows)
+		{
+			$this->appendHeaderWithResult($array);
+		}
+		$pages = ceil($totalRows/$limit); 
+		$offset = ($page - 1) * $limit;
+		$sql = "select * from customer order by user_id LIMIT $offset, $limit;"; 
+		$result = $this->db->exec($sql);
+		if(!$result)
+		{
+			$this->appendHeaderWithResult($array);
+		}
+		while ($row = $result->fetch_assoc()) {
+			$data[] = $row;
+		}
+		$array = ["data"=>$data,"pages"=>$pages,"code"=>1];
+		
+		$this->appendHeaderWithResult($array);
+	}
+
+	public function InsertCustomerDetail()
 	{
 		if(!$this->isTableExist()){ 
 			$this->createcustomerTable();
@@ -112,14 +121,23 @@ class Customer_Model extends Model{
 		if($exist){  
 			if($this->insertDataInTable())
 			{
-				// echo "Data Inserted successfully";
-				return true;
+				$res = array('result'=>'data inserted','code'=>1);
+				$this->appendHeaderWithResult($res);
 			}
 			else{
-				echo "Sorry Data Cant Inserted";
-				return false;
+				$res = array('result'=>'data not inserted',code=>0);
+				$this->appendHeaderWithResult($res);
 			}
+		}else{
+			$res = array('result'=>'data inserted','code'=>1);
+			$this->appendHeaderWithResult($res);
 		}
+	}
+	function appendHeaderWithResult($result){
+		header("Access-Control-Allow-Origin: *");
+		header('Content-Type: application/json');
+		echo json_encode($result);
+		die;
 	}
 }
 ?>

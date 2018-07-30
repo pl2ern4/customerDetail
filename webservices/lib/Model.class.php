@@ -6,7 +6,7 @@ class Model
 	public $connect;
 	public function __construct()
 	{	
-		$this->connect = new DB();
+		$this->db = new DB();
 	}
 }
 ?>
