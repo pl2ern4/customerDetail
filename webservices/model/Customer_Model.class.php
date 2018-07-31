@@ -106,7 +106,7 @@ class Customer_Model extends Model{
 		while ($row = $result->fetch_assoc()) {
 			$data[] = $row;
 		}
-		$array = ["data"=>$data,"pages"=>$pages,"code"=>1];
+		$array = ["data"=>$data,"pages"=>$pages,"code"=>1,"count"=>$totalRows];
 		
 		$this->appendHeaderWithResult($array);
 	}

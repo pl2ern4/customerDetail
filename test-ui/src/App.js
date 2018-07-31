@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
+import {config} from './config';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import RenderData from './renderTable';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import purple from '@material-ui/core/colors/purple';
 
 class App extends Component {
   constructor(props) {
@@ -14,22 +13,42 @@ class App extends Component {
       error: null,
       isLoaded: false,
       isLoading : false,
-      items: []
+      items: [],
+      page:0 ,
     };
+    this.getCustomerDetail = this.getCustomerDetail.bind(this);
   }
-  
-  getCustomerDetail(){
+  componentWillMount(){
     this.setState({
-        isLoading:true
+      isLoading:true
     });
-    fetch("http://localhost/php-js-dev-test/webservices/customer")
+    fetch(config.API+'/initData')
+    .then(res=>res.json())
+    .then(res=>{
+      if(res){
+        this.setState({
+          isLoading: false
+        });
+      }
+    })
+    .catch(error=>{
+      alert("Some Server Error found, Please reload the Page");
+      return false;
+    })
+  }
+  getCustomerDetail(param){
+    
+    const {page} = param;
+    
+    fetch(config.API+'/getCustomer?page='+(page+1)+'&limit=20')
       .then(result => result.json())
       .then(result=>{ 
         if(result)
           {
             this.setState({
               isLoading: false,
-              items: result 
+              items: result,
+              page
             });
           }
       })
@@ -38,20 +57,28 @@ class App extends Component {
             isLoaded: true,
             isLoading: false,
             error
+          },()=>{
+            alert("Some Server Error found, Please reload the Page");
+            return false;
           });
         
       });
   }
+  handleChangePage(e, page){
+    this.getCustomerDetail({page});
+    return false;
+  }
+ 
   render() {
     const { classes } = this.props;
-    const { items, isLoading } = this.state; console.log(items);
+    const { items, isLoading,page } = this.state; 
     return (
       <div className="App">
-        <Button disabled={isLoading} onClick={()=>this.getCustomerDetail()} variant="contained" color="primary" className={classes.button}>
+        {items.length===0 && <Button disabled={isLoading} onClick={()=>this.getCustomerDetail({page})} variant="contained" color="primary" className={classes.button}>
          Get Customer Detail
-        </Button>
+        </Button>}
         {isLoading && <CircularProgress className={"loader " + classes.progress} size={50} />}
-        <RenderData items={items}/>
+        <RenderData items={items.data} count={items.count/1} page={page} pages={items.pages} handleChangePage={(e,page)=>this.handleChangePage(e,page)} />
       </div>
     );
   }
