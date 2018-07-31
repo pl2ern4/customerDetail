@@ -51,9 +51,9 @@ const RenderData = (props) => {
                         </TableRow>
                         );
                     })}
-                    <TableRow style={{ height: 49 * emptyRows }}>
+                    {/* <TableRow style={{ height: 49 * emptyRows }}>
                     <TableCell colSpan={6} />
-                    </TableRow>
+                    </TableRow> */}
                 </TableBody>
             </Table>
             </div>
